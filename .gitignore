@@ -1,0 +1,21 @@
+# Virtual environments
+.venv/
+.venv-*/
+venv/
+ENV/
+
+# Model weights (large checkpoints)
+weights/
+
+# Python cache & build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# OS / Editor / Temp export files
+.DS_Store
+.ipynb_checkpoints/
+drex_results.zip

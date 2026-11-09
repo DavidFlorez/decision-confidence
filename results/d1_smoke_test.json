@@ -1,0 +1,95 @@
+{
+  "env": {
+    "model_id": "LiquidAI/d1-2B",
+    "commit_hash": "652f920e544ea37f81e4b0ce89b81d4ed0da90b1",
+    "served_default_temperature": 1.337398453966105,
+    "served_bucket_temperatures": {},
+    "device": "mps",
+    "dtype": "bfloat16",
+    "batch_size": 16,
+    "python_version": "3.13.7",
+    "platform": "macOS-26.7.1-arm64-arm-64bit-Mach-O",
+    "processor": "arm",
+    "torch_version": "2.15.0",
+    "transformers_version": "5.22.1",
+    "torchvision_version": "0.29.2",
+    "pillow_version": "13.0.0",
+    "mro_head": [
+      "transformers_modules.LiquidAI.d1_hyphen_2B.652f920e544ea37f81e4b0ce89b81d4ed0da90b1.modeling_d1_lfm3_vl.D1Model",
+      "transformers_modules.LiquidAI.d1_hyphen_2B.652f920e544ea37f81e4b0ce89b81d4ed0da90b1.lfm3.Lfm3SystemOne",
+      "transformers_modules.LiquidAI.d1_hyphen_2B.652f920e544ea37f81e4b0ce89b81d4ed0da90b1.modeling_d1.SystemOneModel",
+      "transformers_modules.LiquidAI.d1_hyphen_2B.652f920e544ea37f81e4b0ce89b81d4ed0da90b1.modeling_lfm3_vl.Lfm3VlForConditionalGeneration",
+      "transformers_modules.LiquidAI.d1_hyphen_2B.652f920e544ea37f81e4b0ce89b81d4ed0da90b1.modeling_lfm3_vl.Lfm3VlPreTrainedModel"
+    ],
+    "engine_mro": [
+      "transformers_modules.LiquidAI.d1_hyphen_2B.652f920e544ea37f81e4b0ce89b81d4ed0da90b1.runner.SystemOne",
+      "transformers_modules.LiquidAI.d1_hyphen_2B.652f920e544ea37f81e4b0ce89b81d4ed0da90b1.runner.SlotReader",
+      "transformers_modules.LiquidAI.d1_hyphen_2B.652f920e544ea37f81e4b0ce89b81d4ed0da90b1.api.SystemOneApi",
+      "builtins.object"
+    ],
+    "system_one_batch_signature": "(requests: 'Sequence[tuple]', score_readout: 'str' = 'median', abstain_below: 'float | None' = None, set_size: 'int | None' = None) -> 'list[dict]'",
+    "fallback_log": [
+      "SUCCESS: device=mps, dtype=bfloat16"
+    ]
+  },
+  "ticket_test": {
+    "elapsed_sec": 0.3370647500269115,
+    "answers": {
+      "refund": {
+        "type": "noul",
+        "noul": 0.9969659930249479
+      },
+      "team": {
+        "type": "choice",
+        "choice": "billing",
+        "confidence": 0.7110766401107321,
+        "probabilities": {
+          "billing": 0.7110766401107321,
+          "shipping": 0.24272576232777054,
+          "technical": 0.046197597561497404
+        }
+      },
+      "topics": {
+        "type": "choice",
+        "choices": [
+          "billing",
+          "delivery"
+        ],
+        "probabilities": {
+          "billing": 0.9452013217498777,
+          "delivery": 0.9678339152062667,
+          "login": 0.0
+        }
+      },
+      "urgency": {
+        "type": "score",
+        "score": 1.0,
+        "confidence": 0.6748462451918643,
+        "probabilities": {
+          "0": 0.2303585296976156,
+          "1": 0.6748462451918643,
+          "2": 0.09479522511052021
+        },
+        "legend": {
+          "0": "low",
+          "1": "medium",
+          "2": "high"
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 189,
+      "output_tokens": 0
+    },
+    "load_sec": 4.572572082746774
+  },
+  "smoke_20": {
+    "n": 20,
+    "wall_sec": 17.15396837517619,
+    "sec_per_paper": 0.8576984187588096,
+    "projected_560_minutes": 8.005185241748888,
+    "max_prob_sum_abs_err": 3.3306690738754696e-16,
+    "max_conf_vs_max_prob_diff": 0.0,
+    "sample_accuracy_20": 0.9
+  }
+}
