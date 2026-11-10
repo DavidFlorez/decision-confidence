@@ -1,0 +1,28 @@
+{
+  "env": {
+    "model_id": "nace-ai/drex-max-v1",
+    "repo_commit_sha": "81cb1111d9ceb6fb54eb2e300890ec5380f175c0",
+    "download_wall_sec": 135.1661012410001,
+    "checkpoint_base_model": "Qwen/Qwen3.8-27B",
+    "checkpoint_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+    "served_default_temperature": 1.0087417621345625,
+    "attention_mode": "noncausal_full_attention",
+    "python_version": "3.13.16",
+    "platform": "Linux-6.6.159+-x86_64-with-glibc2.39",
+    "torch_version": "2.14.1+cu130",
+    "cuda_version": "13.0",
+    "transformers_version": "5.17.0",
+    "fla_version": "0.6.0",
+    "gpu_name": "NVIDIA A100-SXM4-80GB",
+    "gpu_vram_gib": 79.25,
+    "nvidia_smi": "Tue Nov 10 00:38:24 2026       \n+-----------------------------------------------------------------------------------------+\n| NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |\n+-----------------------------------------+------------------------+----------------------+\n| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |\n| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |\n|                                         |                        |               MIG M. |\n|=========================================+========================+======================|\n|   0  NVIDIA A100-SXM4-80GB          Off |   00000000:00:05.0 Off |                    0 |\n| N/A   33C    P0             53W /  400W |       6MiB /  81920MiB |      0%      Default |\n|                                         |                        |             Disabled |\n+-----------------------------------------+------------------------+----------------------+\n\n+-----------------------------------------------------------------------------------------+\n| Processes:                                                                              |\n|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |\n|        ID   ID                                                               Usage      |\n|=========================================================================================|\n|  No running processes found                                                             |\n+-----------------------------------------------------------------------------------------+",
+    "batch_size": 8
+  },
+  "load_sec": 18.025458601000082,
+  "smoke_50": {
+    "n": 50,
+    "wall_sec": 54.0266441089999,
+    "sec_per_query": 1.080532882179998,
+    "sample_accuracy_50": 0.64
+  }
+}

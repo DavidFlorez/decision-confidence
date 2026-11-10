@@ -1,0 +1,21 @@
+{
+  "env": {
+    "model_id": "LiquidAI/d1-2B",
+    "commit_hash": "652f920e544ea37f81e4b0ce89b81d4ed0da90b1",
+    "served_default_temperature": 1.337398453966105,
+    "device": "mps",
+    "dtype": "bfloat16",
+    "batch_size": 16,
+    "python_version": "3.13.7",
+    "platform": "macOS-26.7.1-arm64-arm-64bit-Mach-O",
+    "torch_version": "2.15.0",
+    "transformers_version": "5.22.1",
+    "torchvision_version": "0.29.2",
+    "pillow_version": "13.0.0"
+  },
+  "n_queries": 600,
+  "main_wall_sec": 914.7192809581757,
+  "main_sec_per_query": 1.5245321349302927,
+  "reversed_wall_sec": 843.4369469997473,
+  "reversed_sec_per_query": 1.405728244999579
+}

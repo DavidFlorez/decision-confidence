@@ -1,0 +1,98 @@
+{
+  "source_dataset": "CARROT-LLM-Routing/SPROUT-o3mini",
+  "source_split": "test",
+  "source_rows_total": 6494,
+  "eligible_rows_unique_under_4000_chars": 6325,
+  "max_prompt_chars": 4000,
+  "seed": 42,
+  "primary_small_model": "wxai-llama-3-2-3b-instruct",
+  "primary_frontier_model": "openai-o3-mini",
+  "tracked_models_pricing_usd_per_1m": {
+    "wxai-llama-3-2-3b-instruct": [
+      0.06,
+      0.06
+    ],
+    "wxai-llama-3-1-8b-instruct": [
+      0.2,
+      0.2
+    ],
+    "openai-gpt-4o-mini": [
+      0.15,
+      0.6
+    ],
+    "openai-gpt-4o": [
+      2.5,
+      10.0
+    ],
+    "aws-claude-3-5-sonnet-v1": [
+      3.0,
+      15.0
+    ],
+    "openai-o3-mini": [
+      1.1,
+      4.4
+    ]
+  },
+  "fit": {
+    "n": 100,
+    "by_family": {
+      "GPQA": 2,
+      "MATH": 23,
+      "MMLU-Pro": 27,
+      "RAGBench": 3,
+      "openhermes": 45
+    },
+    "by_gold_route": {
+      "frontier": 50,
+      "small": 50
+    },
+    "small_always_acc": 0.627,
+    "frontier_always_acc": 0.927,
+    "oracle_acc": 0.9359999999999999,
+    "small_always_cost_per_1k": 0.0673164,
+    "frontier_always_cost_per_1k": 5.589837000000001,
+    "oracle_cost_per_1k": 3.5339178
+  },
+  "test": {
+    "n": 500,
+    "by_family": {
+      "GPQA": 5,
+      "MATH": 115,
+      "MMLU-Pro": 138,
+      "MuSR": 4,
+      "RAGBench": 12,
+      "openhermes": 226
+    },
+    "by_gold_route": {
+      "frontier": 246,
+      "small": 254
+    },
+    "small_always_acc": 0.6452,
+    "frontier_always_acc": 0.9282,
+    "oracle_acc": 0.9382,
+    "small_always_cost_per_1k": 0.05721912,
+    "frontier_always_cost_per_1k": 5.1680090000000005,
+    "oracle_cost_per_1k": 3.0014710000000004
+  },
+  "total": {
+    "n": 600,
+    "by_family": {
+      "GPQA": 7,
+      "MATH": 138,
+      "MMLU-Pro": 165,
+      "MuSR": 4,
+      "RAGBench": 15,
+      "openhermes": 271
+    },
+    "by_gold_route": {
+      "frontier": 296,
+      "small": 304
+    },
+    "small_always_acc": 0.6421666666666667,
+    "frontier_always_acc": 0.9279999999999999,
+    "oracle_acc": 0.9378333333333334,
+    "small_always_cost_per_1k": 0.05890199999999999,
+    "frontier_always_cost_per_1k": 5.238313666666667,
+    "oracle_cost_per_1k": 3.0902121333333334
+  }
+}

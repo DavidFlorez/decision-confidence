@@ -4,7 +4,10 @@
 
 > **Benchmark claim tested**: *"When Drex Max is at least 93% sure, it is right 97% of the time."* — [Nace AI, Nov 6, 2026 report](https://www.nace.ai/research/towards-foundation-decision-models) (`arXiv:2611.07854`)
 
-Two open-weight non-generative decision models — **[Drex Max v1](https://huggingface.co/nace-ai/drex-max-v1)** (Nace AI, 27B) and **[d1-2B](https://huggingface.co/LiquidAI/d1-2B)** (Liquid AI, 1.9B) — output direct choice probability distributions in a single forward pass instead of generating tokens. Alongside [Artificial Analysis Decision Index v2](https://x.com/ArtificialAnlys/status/2119578471559213411) introducing calibration scoring and Nace announcing open weights for [Drex Max v1.1 "soon"](https://x.com/NaceAI/status/2119792132558819447), we test the **open weights available today (Drex Max v1 and d1-2B)** on genuinely post-training, zero-contamination data: **560 arXiv Computer Science papers submitted Nov 1–8, 2026**, routed into **8 arXiv categories** from **title + abstract alone** (`96` stratified calibration-fit papers + `464` frozen test papers).
+Two open-weight non-generative decision models — **[Drex Max v1](https://huggingface.co/nace-ai/drex-max-v1)** (Nace AI, 27B) and **[d1-2B](https://huggingface.co/LiquidAI/d1-2B)** (Liquid AI, 1.9B) — output direct choice probability distributions in a single forward pass instead of generating tokens. Alongside [Artificial Analysis Decision Index v2](https://x.com/ArtificialAnlys/status/2119578471559213411) introducing calibration scoring and Nace announcing open weights for [Drex Max v1.1 "soon"](https://x.com/NaceAI/status/2119792132558819447), we test the **open weights available today (Drex Max v1 and d1-2B)** across two controlled evaluations:
+
+- **Part 1 — Zero-Contamination arXiv Calibration (`n = 560`)**: **arXiv CS papers submitted Nov 1–8, 2026** routed into **8 categories** from **title + abstract alone** (`96` stratified fit + `464` frozen test).
+- **Part 2 — Model Selection & LLM Cost-Quality Routing (`n = 600` + Part 1 Cascade)**: Zero-shot binary LLM routing on **[`SPROUT-o3mini`](https://huggingface.co/datasets/CARROT-LLM-Routing/SPROUT-o3mini)** (`Llama-3.2-3B` vs. `OpenAI o3-mini`, `100` fit + `500` test), testing Nace's threshold non-transferability (`arXiv:2611.07854` §M), plus a **local-to-GPU cascade** (`d1-2B` on Apple M3 $\to$ `Drex Max v1` on A100) on the unseen arXiv test split.
 
 ---
 
@@ -123,8 +126,66 @@ Per-category primary recall (`n = 58` test papers each) reveals clear attractors
 
 - **Unseen dataset (`Nov 1–8, 2026`)**: Pulled directly via `export.arxiv.org/api/query` across 8 CS categories (`cs.CL, cs.CV, cs.LG, cs.RO, cs.CR, cs.SE, cs.DC, cs.HC`), filtered to papers with `<= 1` cross-list (`11.81%` in-set cross-list rate overall across `2,142` eligible submissions, chosen over Set A containing `cs.AI` which had `27.92%` overlap). Stratified `seed = 0` sample of `70/category` (`560` total -> `96` fit + `464` test). Both models were released earlier and could not have trained on these abstracts.
 - **Noisy author labels**: Gold labels reflect submitting authors' primary filing choice rather than an objective committee label—explaining why cross-listed papers have `98.4%` any-listed accuracy on Drex and why the only two Drex errors above 93% (`2611.02152` on backpropagation and `2611.08108` on post-quantum Ethereum signatures) are misfiled/dual-domain submissions.
-- **Single-task scope & Nace benchmark comparison**: This study evaluates **one zero-shot task** (8-way CS abstract classification, `n = 464`). Differences vs. Nace's 37-task Decision Index report reflect domain/task characteristics and arXiv filing ambiguity rather than a broad statement on all decision tasks.
+- **Two-task scope & Nace benchmark comparison**: Part 1 evaluates 8-way CS abstract classification (`n = 464`); Part 2 adds zero-shot binary LLM cost-quality routing (`n = 500`). Neither model was fine-tuned on `SPROUT-o3mini`'s model-pair error boundaries, so differences vs. Nace's 37-task Decision Index report reflect domain/task shift and zero-shot meta-reasoning difficulty.
 - **Model versions tested**: Tests open **Drex Max v1** (`nace-ai/drex-max-v1`, commit `81cb1111d9ceb6fb54eb2e300890ec5380f175c0`) and **d1-2B** (`LiquidAI/d1-2B`, commit `652f920e544ea37f81e4b0ce89b81d4ed0da90b1`), not Nace's announced upcoming v1.1.
+
+---
+
+## Part 2: Model Selection & Zero-Shot LLM Cost-Quality Routing
+
+Using the exact same open weights, we test **two practical model-selection scenarios**: (A) zero-shot **LLM prompt routing** between a tiny model and a frontier reasoning model on [`CARROT-LLM-Routing/SPROUT-o3mini`](https://huggingface.co/datasets/CARROT-LLM-Routing/SPROUT-o3mini) (`n = 600`: `100` fit + `500` held-out test), and (B) a **decision-model cascade** (`d1-2B` local Apple M3 $\to$ `Drex Max v1` A100 GPU) on Part 1's `464` unseen Nov 2026 arXiv papers.
+
+### A. Zero-Shot LLM Router (`Llama-3.2-3B` vs. `OpenAI o3-mini`, `n = 500` Test Split)
+
+![Cost vs. Answer Quality: Zero-Shot LLM Routing](assets/router_pareto.png)
+
+Each prompt is evaluated zero-shot as a binary decision between `"small"` (`Llama-3.2-3B-Instruct`, `$0.06/1M`) and `"frontier"` (`OpenAI o3-mini`, `$1.10/$4.40 per 1M`), scored using SPROUT's exact per-query correctness and stored input/output token costs (2,000-resample 95% bootstrap CIs, `seed = 0`):
+
+| Router / Policy | Quality | Cost per 1k Prompts | Cost Savings vs. Frontier | AUROC / Binary Acc (`@0.50`) | APGR (`PGR @ 50% Cost`) |
+|---|---|---|---|---|---|
+| **Always Small (`Llama-3.2-3B`)** | `64.5%` `[60.6%, 68.5%]` | **`$0.06`** (`$0.057`) | `98.9%` | `—` / `50.8%` | `0.0%` (`0.0%`) |
+| **Always Frontier (`o3-mini`)** | `92.8%` `[90.7%, 94.7%]` | **`$5.17`** (`$5.168`) | `0.0%` | `—` / `49.2%` | `100.0%` (`100.0%`) |
+| **Oracle Upper Bound** | `93.8%` `[91.9%, 95.6%]` | **`$3.00`** (`$3.001`) | `41.9%` | `—` / `100.0%` | `103.5%` |
+| **Prompt-Length Heuristic** *(longest first)* | `—` | *sweep* | *sweep* | `0.520` `[0.469, 0.570]` | **`54.4%`** `[50.0%, 58.6%]` |
+| **Drex Max v1 (27B, zero-shot)** | `85.1%` (`@0.50`) | `$4.33/1k` (`@0.50`) | `16.2%` (`@0.50`) | **`0.583`** `[0.533, 0.632]` / `55.0%` | **`45.8%`** `[41.6%, 50.4%]` (`46.9%`) |
+| **d1-2B (1.9B, zero-shot)** | `79.7%` (`@0.50`) | `$3.34/1k` (`@0.50`) | `35.3%` (`@0.50`) | **`0.615`** `[0.565, 0.662]` / `59.4%` | **`41.6%`** `[37.7%, 46.1%]` (`36.1%`) |
+
+Four key empirical findings emerge on SPROUT-o3mini:
+
+1. **Binary ranking (`AUROC`) diverges sharply from economic routing (`APGR`)**:
+   - **d1-2B edges Drex Max v1 on raw binary AUROC** (`0.615` vs. `0.583`, $\Delta = -0.032$ `[-0.065, +0.000]`), yet **Drex Max v1 beats d1-2B on cost-quality APGR** (`45.8%` vs. `41.6%`, $\Delta = +4.2\text{ pt}$ `[+1.4, +7.0]`; `46.9%` vs. `36.1%` PGR at 50% cost).
+   - **Why both trail a dumb prompt-length heuristic (`54.4%` APGR vs. `50%` random chord)**: On SPROUT-o3mini, short open-ended `openhermes` prompts (`250` chars mean) trigger verbose, expensive `o3-mini` reasoning (`$5.52/1k`) for only `+18.0 pt` quality gain, whereas longer `MMLU-Pro` prompts (`766` chars) cost **less** (`$4.91/1k`) and deliver **`+43.2 pt`** marginal gain (`3B = 43.2%`, `o3-mini = 86.4%`). Zero-shot decision models predict *perceived math hardness* first (`MATH` receives **`83.8%`** mean `p(frontier)` on Drex and `53.4%` on d1, even though `Llama-3.2-3B` already solves `67.7%` of `MATH`), whereas length accidentally front-loads high-ROI `MMLU-Pro`. Drex partially recovers on `APGR` because it routes `MMLU-Pro` (`57.5%` mean `pfr`) much more aggressively than d1 (`39.7%`).
+   - Evaluating the exact same prompt probabilities across **secondary LLM pairs (`n = 500`)**: `GPT-4o-mini -> o3-mini` reaches **AUROC `0.620` / APGR `52.3%` / PGR@50% `54.6%`** on Drex (`0.609` / `47.6%` / `39.5%` on d1); `Llama-3.1-8B -> o3-mini` hits `0.574` / `48.7%` (Drex) and `0.607` / `43.9%` (d1); `Llama-3.2-3B -> Claude-3.5-Sonnet` hits `0.510` / `41.5%` (Drex) and `0.552` / `39.7%` (d1).
+
+2. **Fixed decision cutoffs fail to transfer across models (confirming Nace `arXiv:2611.07854` §M)**:
+   ![Fixed Cutoffs vs. 100-Label Tuning](assets/router_thresholds.png)
+   - At default `0.50`, Drex Max v1 over-escalates **`69.8%`** (`$4.33/1k`, `55.0%` route acc), whereas d1 escalates **`45.0%`** (`$3.34/1k`, `59.4%` acc). Applying Nace §M's `0.80` cutoff shifts Drex to `50.0%` escalation (`57.2%` acc, `$3.54/1k`, `82.6%` qual), **but collapses d1-2B to `14.4%` escalation** (`69.6%` qual, `$1.45/1k`).
+   - Fitting cutoff $\theta$ on **`100` labeled fit-split queries** aligns operating points to each checkpoint's scale: Drex tunes to `theta_raw = 0.759` (`54.4%` esc, `56.0%` acc, `$3.70/1k`, or `0.913` for `50%`-budget `$2.54/1k`); d1 tunes to `theta_raw = 0.609` (`32.4%` esc, `57.2%` acc, `$2.69/1k`, or `0.699` for `50%`-budget `$2.28/1k`). Cross-swapping those thresholds again breaks escalation (`61.6%` on Drex vs. `18.2%` on d1).
+
+3. **Calibration flips sign on meta-cognitive routing — both models become severely OVERCONFIDENT**:
+   ![Routing Calibration & Per-Benchmark Behavior](assets/router_calibration_and_families.png)
+   - Unlike Part 1 (`tau = 0.916` Drex, `0.701` d1 — underconfident on 8-way arXiv topics), predicting another LLM's failure makes **both models heavily overconfident**:
+     - **Drex Max v1 (`K = 2`)**: 15-bin `p_top` ECE = **`29.1%`** `[25.6%, 33.8%]` (`NLL = 1.098`, `Brier = 0.339`). At `p_top >= 0.93`, accuracy collapses to **`58.7%`** `[51.3%, 66.1%]` (`98/167`, `33.4%` share); at `chance_corrected >= 0.93` (`p_top >= 0.965`), accuracy is **`61.1%`** `[50.6%, 71.3%]` (`55/90`, `18.0%` share). **100-label temperature scaling (`tau = 4.649`) slashes ECE 4.2x (`29.1% -> 6.9%` `[4.2%, 11.4%]`)**, drops NLL `1.098 -> 0.694`, and suppresses all false `>=0.93` certainty (`0/500`).
+     - **d1-2B (`K = 2`)**: raw `p_top` ECE = **`16.5%`** `[13.0%, 21.2%]` (`>=0.93` accuracy **`66.1%`**, `37/56`). **`tau = 2.471` cuts ECE 3.1x (`16.5% -> 5.3%` `[3.3%, 10.0%]`)** and NLL `0.804 -> 0.682` (`0/500` left `>=0.93`).
+   - **Per-benchmark breakdown & option reversal**: Reversing `"small"` and `"frontier"` order flips **`3.6%`** `[2.0%, 5.4%]` (`18/500`) of Drex choices vs. **`11.4%`** `[8.8%, 14.2%]` (`57/500`) on d1-2B. Drex escalates `80.0%` of `MATH` (`90.4%` at `@0.50`, only `32.2%` needed) yet **`0.0%`** of `RAGBench` (`n=12`) and `MuSR` (`n=4`).
+
+---
+
+### B. Part 1 Decision-Model Cascade (`d1-2B` Local Apple M3 $\to$ `Drex Max v1` A100 GPU, `n = 464`)
+
+![Part 1 Decision-Model Cascade](assets/cascade_arxiv.png)
+
+When both models operate in-wheelhouse on unseen Nov 2026 arXiv abstracts (`d1-2B` running locally on Apple M3 at `$0` GPU cost, escalating low-confidence papers to 27B `Drex Max v1` on A100):
+
+| Cascade Policy (`n = 464` Unseen Test Papers) | Kept on Local `d1-2B` | Escalated to `Drex Max v1` | Combined Primary Accuracy |
+|---|---|---|---|
+| **All `Drex Max v1` (A100 GPU)** | `0.0%` (`0/464`) | `100.0%` (`464/464`) | **`84.9%`** `[81.5%, 87.9%]` |
+| **Uncalibrated `d1 >= 0.93`** | `4.5%` (`21/464`, `[2.8%, 6.5%]`) | `95.5%` (`443/464`) | **`84.9%`** `[81.5%, 87.9%]` (**0.0 pt drop**) |
+| **96-label $\tau = 0.701$: `d1_temp >= 0.93`** | **`18.8%`** (`87/464`, `[15.5%, 22.4%]`) | `81.2%` (`377/464`) | **`84.9%`** `[81.5%, 87.9%]` (**0.0 pt drop — 4.1x free offload**) |
+| **96-label fit `95%`-prec (`d1_temp >= 0.902`)** | **`25.4%`** (`118/464`, `[21.8%, 29.7%]`) | `74.6%` (`346/464`) | **`84.7%`** `[81.2%, 87.7%]` (`-0.2 pt`) |
+| **All `d1-2B` (Apple M3 Laptop)** | `100.0%` (`464/464`) | `0.0%` (`0/464`) | **`76.1%`** `[72.2%, 79.7%]` |
+
+Because `d1-2B` already gets `>=93%` calibrated predictions right (`96.6%`) at strong margins, **a 96-label scalar temperature fix lets `d1-2B` absorb `18.8%` (`4.1x` more queries) locally with literally zero accuracy loss** (and `25.4%` at `-0.2 pt`) vs. running all `464` abstracts on a 27B A100 GPU.
 
 ---
 
@@ -132,12 +193,17 @@ Per-category primary recall (`n = 58` test papers each) reveals clear attractors
 
 ### Repository Layout
 
-- [`scripts/build_dataset.py`](scripts/build_dataset.py) — arXiv API harvest (`data/raw/*.xml`), overlap check (`data/counts.json`), stratified fit/test split (`data/papers.jsonl`).
-- [`scripts/common.py`](scripts/common.py) — Canonical & reversed 8-category prompts and shared output validation.
-- [`scripts/run_d1.py`](scripts/run_d1.py) — Local `LiquidAI/d1-2B` execution via `SystemOneModel` (`results/d1_*.json[l]`).
-- [`scripts/run_drex.py`](scripts/run_drex.py) & [`notebooks/drex_max_colab.ipynb`](notebooks/drex_max_colab.ipynb) — Cloud GPU `nace-ai/drex-max-v1` execution (`results/drex_*.json[l]`).
-- [`scripts/analyze.py`](scripts/analyze.py) — Stratified test-split metrics, 96-label temperature fit, bootstrap CIs (`results/metrics.json`, `results/summary.md`).
-- [`scripts/make_charts.py`](scripts/make_charts.py) — Publication PNGs under [`assets/`](assets/).
+- **Part 1 (Unseen Nov 2026 arXiv Calibration)**:
+  - [`scripts/build_dataset.py`](scripts/build_dataset.py) — arXiv API harvest (`data/raw/*.xml`), overlap check (`data/counts.json`), stratified fit/test split (`data/papers.jsonl`).
+  - [`scripts/common.py`](scripts/common.py) — Canonical & reversed 8-category prompts and shared output validation.
+  - [`scripts/run_d1.py`](scripts/run_d1.py) & [`scripts/run_drex.py`](scripts/run_drex.py) — Inference (`results/d1_*.json[l]`, `results/drex_*.json[l]`).
+  - [`scripts/analyze.py`](scripts/analyze.py) & [`scripts/make_charts.py`](scripts/make_charts.py) — Part 1 metrics (`results/metrics.json`, `results/summary.md`) and 7 PNGs under [`assets/`](assets/).
+- **Part 2 (SPROUT-o3mini LLM Router & Part 1 Cascade)**:
+  - [`scripts/build_router_dataset.py`](scripts/build_router_dataset.py) — Stratified `600`-prompt SPROUT-o3mini subset (`100` fit + `500` test in `data/router_queries.jsonl`).
+  - [`scripts/router_common.py`](scripts/router_common.py) — Canonical & reversed binary router prompts plus official SPROUT model pricing.
+  - [`scripts/run_d1_router.py`](scripts/run_d1_router.py) & [`scripts/run_drex_router.py`](scripts/run_drex_router.py) — Inference (`results/router_d1_*.json[l]`, `results/router_drex_*.json[l]`).
+  - [`scripts/analyze_router.py`](scripts/analyze_router.py) & [`scripts/make_router_charts.py`](scripts/make_router_charts.py) — Part 2 router + cascade metrics (`results/router_metrics.json`, `results/router_summary.md`) and 4 PNGs under [`assets/`](assets/).
+- [`notebooks/drex_max_colab.ipynb`](notebooks/drex_max_colab.ipynb) — End-to-end Google Colab A100-80GB notebook covering both Part 1 and Part 2 Drex Max v1 runs.
 - [`NOTES.md`](NOTES.md) — Chronological lab notebook with exact software versions, timings, smoke checks, and limitations.
 
 ### Commands
@@ -147,25 +213,32 @@ Per-category primary recall (`n = 58` test papers each) reveals clear attractors
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 .venv/bin/python scripts/build_dataset.py --reuse-raw
+.venv/bin/python scripts/build_router_dataset.py
 
 # 2. LiquidAI/d1-2B (local Apple Silicon MPS or CUDA)
 python3 -m venv .venv-d1
 .venv-d1/bin/pip install -r requirements-d1.txt
 .venv-d1/bin/python scripts/run_d1.py --mode full
+.venv-d1/bin/python scripts/run_d1_router.py --mode full
 
 # 3. nace-ai/drex-max-v1 (Colab A100-80GB / G4 / H100 — see notebooks/drex_max_colab.ipynb)
 pip install -r weights/drex-max-v1/requirements.txt
 python3 scripts/run_drex.py --weights weights/drex-max-v1 --papers data/papers.jsonl --results-dir results --batch-size 8 --mode full
+python3 scripts/run_drex_router.py --weights weights/drex-max-v1 --queries data/router_queries.jsonl --results-dir results --batch-size 8 --mode full
 
-# 4. Compute metrics & regenerate all 7 charts
+# 4. Compute metrics & regenerate all 11 charts (Part 1 + Part 2)
 .venv/bin/python scripts/analyze.py
+.venv/bin/python scripts/make_charts.py
+.venv/bin/python scripts/analyze_router.py
+.venv/bin/python scripts/make_router_charts.py
 ```
 
 ---
 
 ## References
 
-- Nace AI — *Towards Foundation Decision Models* (Nov 6, 2026): https://www.nace.ai/research/towards-foundation-decision-models
+- Nace AI — *Towards Foundation Decision Models* (Nov 6, 2026; `arXiv:2611.07854` incl. §M): https://www.nace.ai/research/towards-foundation-decision-models
 - Nace AI — *Drex Max v1.1 open weights announcement*: https://x.com/NaceAI/status/2119792132558819447
 - Artificial Analysis — *Decision Index v2 calibration scoring*: https://x.com/ArtificialAnlys/status/2119578471559213411
 - Open-weight checkpoints tested: [`nace-ai/drex-max-v1`](https://huggingface.co/nace-ai/drex-max-v1) & [`LiquidAI/d1-2B`](https://huggingface.co/LiquidAI/d1-2B)
+- LLM routing benchmark: [`CARROT-LLM-Routing/SPROUT-o3mini`](https://huggingface.co/datasets/CARROT-LLM-Routing/SPROUT-o3mini)
