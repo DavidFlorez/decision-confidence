@@ -30,12 +30,12 @@ REF_RED = "#DC2626"          # Benchmark reference line
 SHORT_LABELS = {
     "cs.CL": "Language\n(cs.CL)",
     "cs.CV": "Vision\n(cs.CV)",
-    "cs.LG": "Machine Learning\n(cs.LG)",
+    "cs.LG": "Machine\nLearning\n(cs.LG)",
     "cs.RO": "Robotics\n(cs.RO)",
     "cs.CR": "Security\n(cs.CR)",
-    "cs.SE": "Software Eng.\n(cs.SE)",
+    "cs.SE": "Software\nEng.\n(cs.SE)",
     "cs.DC": "Distributed\n(cs.DC)",
-    "cs.HC": "Human-Comp.\n(cs.HC)",
+    "cs.HC": "Human-\nComp.\n(cs.HC)",
 }
 
 ROW_LABELS = {
@@ -110,21 +110,6 @@ def plot_reliability(model_data: dict, short_title_name: str, before_color: str,
         label=f"After 96-paper temperature fix (factor {tau_v:.2f}x; avg gap: {ece_a:.1f} pts)",
     )
 
-    # Annotate bin sizes lightly on major out-of-the-box points (n >= 15)
-    for x, y, n in zip(xb, yb, nb):
-        if n >= 15:
-            offset_y = -14 if y > x else 9
-            ax.annotate(
-                f"n={n}",
-                (x, y),
-                textcoords="offset points",
-                xytext=(0, offset_y),
-                ha="center",
-                fontsize=8.2,
-                color=before_color,
-                fontweight="bold",
-            )
-
     ax.set_xlim(0, 102)
     ax.set_ylim(0, 104)
     ax.set_ylabel("How often the model is right (%)", fontsize=11.5, fontweight="bold")
@@ -137,8 +122,23 @@ def plot_reliability(model_data: dict, short_title_name: str, before_color: str,
     counts_b = np.array([b["count"] for b in bins_before])
     counts_a = np.array([b["count"] for b in bins_after])
 
-    ax_hist.bar(centers - width / 2, counts_b, width=width, color=before_color, alpha=0.82, label="Out-of-the-box")
-    ax_hist.bar(centers + width / 2, counts_a, width=width, color=after_color, alpha=0.82, label="After temperature fix")
+    bars_b = ax_hist.bar(centers - width / 2, counts_b, width=width, color=before_color, alpha=0.82, label="Out-of-the-box")
+    bars_a = ax_hist.bar(centers + width / 2, counts_a, width=width, color=after_color, alpha=0.82, label="After temperature fix")
+    ymax = max(int(counts_b.max()), int(counts_a.max()), 10)
+    ax_hist.set_ylim(0, ymax * 1.28)
+    for bar, cnt, col in list(zip(bars_b, counts_b, [before_color] * len(bars_b))) + list(zip(bars_a, counts_a, [after_color] * len(bars_a))):
+        if cnt >= 5:
+            ax_hist.text(
+                bar.get_x() + bar.get_width() / 2,
+                cnt + ymax * 0.025,
+                f"{int(cnt)}",
+                ha="center",
+                va="bottom",
+                rotation=90,
+                fontsize=7.4,
+                fontweight="bold",
+                color=col,
+            )
     ax_hist.set_ylabel("Papers in bin", fontsize=10.5, fontweight="bold")
     ax_hist.set_xlabel("When the model says it is X% sure (top-choice probability, %)", fontsize=11.5, fontweight="bold")
     ax_hist.set_xlim(0, 102)
@@ -170,7 +170,7 @@ def plot_claim_93(metrics: dict, out_path: Path) -> None:
     drex = metrics["models"]["drex_max"]
     d1 = metrics["models"]["d1_2b"]
 
-    fig, axes = plt.subplots(1, 2, figsize=(12.2, 6.4), dpi=160, sharey=True, facecolor=BG_COLOR)
+    fig, axes = plt.subplots(1, 2, figsize=(12.6, 6.5), dpi=160, sharey=True, facecolor=BG_COLOR)
     fig.subplots_adjust(left=0.075, right=0.975, top=0.81, bottom=0.16, wspace=0.10)
 
     regimes = [
@@ -184,7 +184,7 @@ def plot_claim_93(metrics: dict, out_path: Path) -> None:
 
     for ax, (reg_key, reg_title) in zip(axes, regimes):
         x = np.arange(len(def_keys))
-        bar_w = 0.34
+        bar_w = 0.37
 
         for offset, mdata, mlabel, color in [
             (-bar_w / 2 - 0.02, drex, "Drex Max v1 (27B)", DREX_COLOR),
@@ -213,7 +213,7 @@ def plot_claim_93(metrics: dict, out_path: Path) -> None:
                     vals.append(v)
                     err_lo.append(max(0.0, v - lo))
                     err_hi.append(max(0.0, hi - v))
-                    callouts.append(f"{v:.1f}% right\n({k_cnt}/{m_cnt}; {share_val:.0f}% of set)")
+                    callouts.append(f"{v:.1f}% right\n{k_cnt}/{m_cnt} papers\n({share_val:.0f}% of set)")
 
             bars = ax.bar(
                 x + offset,
@@ -239,7 +239,7 @@ def plot_claim_93(metrics: dict, out_path: Path) -> None:
             for bx, v, lo_e, hi_e, txt in zip(x + offset, vals, err_lo, err_hi, callouts):
                 unoccluded_top = v - lo_e
                 if unoccluded_top >= 36.0:
-                    y_pos = unoccluded_top * 0.52
+                    y_pos = unoccluded_top * 0.50
                     txt_col = "#FFFFFF"
                     va_mode = "center"
                 else:
@@ -252,8 +252,9 @@ def plot_claim_93(metrics: dict, out_path: Path) -> None:
                     txt,
                     ha="center",
                     va=va_mode,
-                    fontsize=8.5,
+                    fontsize=8.2,
                     fontweight="bold",
+                    linespacing=1.22,
                     color=txt_col,
                     zorder=6,
                 )
@@ -339,15 +340,18 @@ def plot_coverage_precision(metrics: dict, out_path: Path) -> None:
         if c95 > 0:
             ax.scatter([c95], [95.0], color=color, s=75, zorder=6, edgecolor="white", linewidth=1.5)
             ax.vlines(c95, 50, 95.0, colors=color, linestyles="--", linewidth=1.2, alpha=0.65)
-            y_annot = 96.3 if mdata["model_key"] == "drex_max" else 91.5
+            if mdata["model_key"] == "drex_max":
+                xy_txt = (min(c95 + 4.0, 76.0), 96.3)
+            else:
+                xy_txt = (11.5, 85.5)
             ax.annotate(
                 f"{label.split()[0]}: auto-sort {c95:.1f}%\nat 95% right",
                 xy=(c95, 95.0),
-                xytext=(min(c95 + 4.0, 76.0), y_annot),
+                xytext=xy_txt,
                 fontsize=9.2,
                 fontweight="bold",
                 color=color,
-                arrowprops={"arrowstyle": "->", "color": color, "lw": 1.1},
+                arrowprops={"arrowstyle": "->", "color": color, "lw": 1.2},
             )
 
     ax.axhline(95.0, color=REF_RED, linestyle="--", linewidth=1.6, label="95% accuracy target for auto-sorting", zorder=2)
@@ -394,8 +398,8 @@ def plot_confusion(model_data: dict, short_title_name: str, cmap_name: str, out_
     counts = np.array(cls["confusion_matrix_counts"], dtype=int)
     norm = np.array(cls["confusion_matrix_row_normalized"], dtype=float) * 100.0
 
-    fig, ax = plt.subplots(figsize=(9.8, 8.2), dpi=160, facecolor=BG_COLOR)
-    fig.subplots_adjust(left=0.22, right=0.95, top=0.84, bottom=0.14)
+    fig, ax = plt.subplots(figsize=(10.6, 8.5), dpi=160, facecolor=BG_COLOR)
+    fig.subplots_adjust(left=0.21, right=0.89, top=0.84, bottom=0.16)
 
     ax.grid(False)
     im = ax.imshow(norm, cmap=cmap_name, vmin=0.0, vmax=100.0, aspect="auto")
@@ -421,14 +425,14 @@ def plot_confusion(model_data: dict, short_title_name: str, cmap_name: str, out_
                 )
 
     ax.set_xticks(np.arange(len(cats)))
-    ax.set_xticklabels([SHORT_LABELS[c] for c in cats], fontsize=9.0)
+    ax.set_xticklabels([SHORT_LABELS[c] for c in cats], fontsize=8.8)
     ax.set_yticks(np.arange(len(cats)))
     ax.set_yticklabels([ROW_LABELS[c] for c in cats], fontsize=9.8)
     ax.set_xlabel("Category picked by the model", fontsize=11.5, fontweight="bold", labelpad=10)
     ax.set_ylabel("Author's primary arXiv category (58 papers each)", fontsize=11.5, fontweight="bold", labelpad=8)
 
-    cbar = fig.colorbar(im, ax=ax, fraction=0.038, pad=0.025)
-    cbar.set_label("Share of row's papers (%)", fontsize=10.0)
+    cbar = fig.colorbar(im, ax=ax, fraction=0.036, pad=0.03)
+    cbar.set_label("Share of row's papers (%)", fontsize=10.2, labelpad=10)
 
     acc = cls["primary_accuracy"]["value"] * 100.0
     any_acc = cls["any_listed_category_accuracy"]["value"] * 100.0
@@ -466,14 +470,10 @@ def plot_cover(metrics: dict, out_path: Path) -> None:
     ax_left.axis("off")
 
     # Tag pill
-    pill = FancyBboxPatch(
-        (0.075, 0.855), 0.56, 0.062, boxstyle="round,pad=0.012,rounding_size=0.02",
-        facecolor="#1E293B", edgecolor="#334155", linewidth=1.2, transform=ax_left.transAxes,
-    )
-    ax_left.add_patch(pill)
     ax_left.text(
-        0.095, 0.886, "OUT-OF-DISTRIBUTION CALIBRATION TEST  |  NOV 1-8, 2026 ARXIV",
-        fontsize=11.5, fontweight="bold", color="#93C5FD", va="center", transform=ax_left.transAxes,
+        0.075, 0.886, "OUT-OF-DISTRIBUTION CALIBRATION TEST  |  NOV 1-8, 2026 ARXIV",
+        fontsize=11.0, fontweight="bold", color="#93C5FD", va="center", transform=ax_left.transAxes,
+        bbox={"boxstyle": "round,pad=0.55,rounding_size=0.35", "facecolor": "#1E293B", "edgecolor": "#334155", "linewidth": 1.2},
     )
 
     # Headline
@@ -501,19 +501,19 @@ def plot_cover(metrics: dict, out_path: Path) -> None:
     d1_cov95 = d1["coverage_at_95_precision"]["coverage"]["value"] * 100.0
 
     cards = [
-        (0.075, "Overall Accuracy", f"{drex_acc:.1f}% vs {d1_acc:.1f}%", "Drex Max 27B vs d1-2B (n=464)", "#60A5FA"),
-        (0.385, "Drex Max at 93%+ Sure", f"{drex_c93_val:.1f}% right", f"Covers {drex_c93_sh:.0f}% of test papers", "#34D399"),
-        (0.695, "Auto-Sort at 95% Right", f"{drex_cov95:.0f}% vs {d1_cov95:.0f}%", "Share sorted without human review", "#FBBF24"),
+        (0.068, "Overall Accuracy", f"{drex_acc:.1f}% vs {d1_acc:.1f}%", "Drex Max 27B vs d1-2B (n=464)", "#60A5FA"),
+        (0.378, "Drex Max at 93%+ Sure", f"{drex_c93_val:.1f}% right", f"Covers {drex_c93_sh:.0f}% of test papers", "#34D399"),
+        (0.688, "Auto-Sort at 95% Right", f"{drex_cov95:.0f}% vs {d1_cov95:.0f}%", "Share sorted without review", "#FBBF24"),
     ]
     for x0, title, big_num, sub, accent in cards:
         box = FancyBboxPatch(
-            (x0, 0.09), 0.285, 0.30, boxstyle="round,pad=0.012,rounding_size=0.025",
+            (x0, 0.09), 0.282, 0.30, boxstyle="round,pad=0.012,rounding_size=0.025",
             facecolor="#1E293B", edgecolor="#334155", linewidth=1.2, transform=ax_left.transAxes,
         )
         ax_left.add_patch(box)
-        ax_left.text(x0 + 0.022, 0.34, title, fontsize=11.5, fontweight="bold", color="#94A3B8", va="top", transform=ax_left.transAxes)
-        ax_left.text(x0 + 0.022, 0.245, big_num, fontsize=20.0, fontweight="bold", color=accent, va="center", transform=ax_left.transAxes)
-        ax_left.text(x0 + 0.022, 0.135, sub, fontsize=10.2, color="#CBD5E1", va="bottom", transform=ax_left.transAxes)
+        ax_left.text(x0 + 0.020, 0.34, title, fontsize=11.0, fontweight="bold", color="#94A3B8", va="top", transform=ax_left.transAxes)
+        ax_left.text(x0 + 0.020, 0.245, big_num, fontsize=17.2, fontweight="bold", color=accent, va="center", transform=ax_left.transAxes)
+        ax_left.text(x0 + 0.020, 0.135, sub, fontsize=9.8, color="#CBD5E1", va="bottom", transform=ax_left.transAxes)
 
     # Right chart panel: Coverage vs Accuracy curve on crisp light card
     ax_card = fig.add_axes([0.50, 0.09, 0.465, 0.82], facecolor="#0F172A")

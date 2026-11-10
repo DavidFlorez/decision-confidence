@@ -1,0 +1,83 @@
+{
+  "env": {
+    "model_id": "nace-ai/drex-max-v1",
+    "repo_commit_sha": "81cb1111d9ceb6fb54eb2e300890ec5380f175c0",
+    "download_wall_sec": 139.50319636,
+    "checkpoint_base_model": "Qwen/Qwen3.8-27B",
+    "checkpoint_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+    "served_default_temperature": 1.0087417621345625,
+    "attention_mode": "noncausal_full_attention",
+    "python_version": "3.13.16",
+    "platform": "Linux-6.6.159+-x86_64-with-glibc2.39",
+    "torch_version": "2.14.1+cu130",
+    "cuda_version": "13.0",
+    "transformers_version": "5.17.0",
+    "fla_version": "0.6.0",
+    "gpu_name": "NVIDIA A100-SXM4-80GB",
+    "gpu_vram_gib": 79.25,
+    "nvidia_smi": "Tue Nov 10 00:02:27 2026       \n+-----------------------------------------------------------------------------------------+\n| NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |\n+-----------------------------------------+------------------------+----------------------+\n| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |\n| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |\n|                                         |                        |               MIG M. |\n|=========================================+========================+======================|\n|   0  NVIDIA A100-SXM4-80GB          Off |   00000000:00:05.0 Off |                    0 |\n| N/A   34C    P0             56W /  400W |       6MiB /  81920MiB |      0%      Default |\n|                                         |                        |             Disabled |\n+-----------------------------------------+------------------------+----------------------+\n\n+-----------------------------------------------------------------------------------------+\n| Processes:                                                                              |\n|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |\n|        ID   ID                                                               Usage      |\n|=========================================================================================|\n|  No running processes found                                                             |\n+-----------------------------------------------------------------------------------------+",
+    "batch_size": 8
+  },
+  "load_sec": 20.21980755900006,
+  "cli_smoke": {
+    "elapsed_sec": 87.08639471900005,
+    "output": {
+      "answers": {
+        "team": {
+          "type": "choice",
+          "probabilities": {
+            "billing": 0.9987731648627098,
+            "technical": 0.0003172514372377483,
+            "other": 0.0009095837000524241
+          },
+          "choice": "billing",
+          "confidence": 0.9981597472940648
+        },
+        "refund": {
+          "type": "noul",
+          "noul": 0.9973957522349036
+        },
+        "urgency": {
+          "type": "score",
+          "probabilities": {
+            "0": 0.014617209690310677,
+            "1": 0.3043443339106599,
+            "2": 0.6810384563990294
+          },
+          "legend": {
+            "0": "Routine",
+            "1": "Soon",
+            "2": "Urgent"
+          },
+          "score": 1.6664212467087187,
+          "confidence": 0.4996318700630781
+        }
+      }
+    },
+    "reference_diffs": {
+      "team_choice_is_billing": true,
+      "billing_prob_diff": 2.6835137290182054e-05,
+      "confidence_diff": 4.025270593521757e-05,
+      "refund_diff": 4.247765096332401e-06
+    }
+  },
+  "smoke_50": {
+    "n": 50,
+    "wall_sec": 31.609708697000087,
+    "sec_per_paper": 0.6321941739400018,
+    "max_prob_sum_abs_err": 1.1102230246251565e-16,
+    "sample_accuracy_50": 0.9
+  },
+  "full_run": {
+    "n_papers": 560,
+    "wall_sec": 103.72939158099996,
+    "papers_per_sec": 5.398662726780852,
+    "mean_latency_sec": 0.18517095491785796
+  },
+  "reversed_run": {
+    "n_papers": 560,
+    "wall_sec": 104.35425682999994,
+    "papers_per_sec": 5.366335950360678,
+    "mean_latency_sec": 0.18628731691071507
+  }
+}
